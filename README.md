@@ -2,6 +2,22 @@
 
 A machine learning-based system for detecting potential electricity theft from smart meter consumption patterns. The project uses behavioral features extracted from historical electricity consumption data and compares Decision Tree, Random Forest, and XGBoost classifiers under class imbalance.
 
+## IEEE Publication
+
+This project is associated with the following IEEE conference publication:
+
+**Behavior-Driven Electricity Theft Detection Using Machine Learning Under Imbalanced Smart Meter Data**
+
+* **Conference:** TQCEBT 2026
+* **Publisher:** IEEE
+* **Publication:** April 2026
+* **IEEE Xplore Document ID:** 11681443
+* **DOI:** 10.1109/TQCEBT67648.2026.11681443
+* **Pages:** 1–6
+
+**IEEE Xplore:** https://ieeexplore.ieee.org/document/11681443
+
+
 ## Project Overview
 
 Electricity theft creates significant financial losses for power distribution companies and is difficult to identify through manual inspection alone.
@@ -208,20 +224,6 @@ results/
 * Build a web dashboard for utility operators
 * Evaluate the approach on additional smart-meter datasets
 
-## Publication
-
-This project is associated with the following IEEE conference publication:
-
-**Behavior-Driven Electricity Theft Detection Using Machine Learning Under Imbalanced Smart Meter Data**
-
-* **Conference:** TQCEBT 2026
-* **Publisher:** IEEE
-* **Publication:** April 2026
-* **IEEE Xplore Document ID:** 11681443
-* **DOI:** 10.1109/TQCEBT67648.2026.11681443
-* **Pages:** 1–6
-
-**IEEE Xplore:** https://ieeexplore.ieee.org/document/11681443
 
 
 ## Author
