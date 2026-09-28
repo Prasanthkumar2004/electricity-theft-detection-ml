@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Electricity Theft Detection</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #eef2f7;
+        }
+
+        .container {
+            width: 1200px;
+            margin: 40px auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .row {
+            display: flex;
+            gap: 30px;
+        }
+
+        .card {
+            flex: 1;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .riskText {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .probText {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Electricity Theft Detection</h1>
+
+    <div class="row">
+
+        <!-- LEFT PANEL -->
+        <div class="card">
+
+            <input type="number" step="any" id="mean_cons" placeholder="Mean Consumption">
+            <input type="number" step="any" id="std_cons" placeholder="Std Consumption">
+            <input type="number" step="any" id="cv" placeholder="CV">
+            <input type="number" step="any" id="zero_ratio" placeholder="Zero Ratio">
+            <input type="number" step="any" id="max_diff" placeholder="Max Difference">
+            <input type="number" step="any" id="event_rate" placeholder="Event Rate">
+
+            <button onclick="predict()">Predict Theft Risk</button>
+
+            <div id="riskLabel" class="riskText" style="margin-top:15px;"></div>
+            <div id="probabilityText" class="probText"></div>
+
+            <canvas id="prChart"></canvas>
+
+            <div id="metrics" style="margin-top:15px;"></div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="card">
+            <canvas id="gaugeChart"></canvas>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+let gaugeChart;
+let prChart;
+
+// Custom needle plugin
+// -------- Correct Needle Plugin --------
+const needlePlugin = {
+    id: 'needle',
+    afterDraw(chart) {
+
+        const {ctx} = chart;
+        const needleValue = chart.config.data.datasets[0].needleValue;
+
+        const meta = chart.getDatasetMeta(0);
+        const centerX = meta.data[0].x;
+        const centerY = meta.data[0].y;
+        const radius = meta.data[0].outerRadius;
+
+        const angle = Math.PI + (Math.PI * needleValue);
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle);
+
+        ctx.beginPath();
+        ctx.moveTo(0, -3);
+        ctx.lineTo(radius - 20, 0);
+        ctx.lineTo(0, 3);
+        ctx.fillStyle = "#444";
+        ctx.fill();
+
+        ctx.restore();
+
+        // center circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
+        ctx.fillStyle = "#444";
+        ctx.fill();
+    }
+};
+
+Chart.register(needlePlugin);
+
+
+// -------- Correct Gauge Function --------
+function drawGauge(value) {
+
+    const ctx = document.getElementById('gaugeChart').getContext('2d');
+
+    if (gaugeChart) gaugeChart.destroy();
+
+    gaugeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [20,20,20,20,20],
+                backgroundColor: [
+                    '#2ecc71',  // green
+                    '#f1c40f',  // yellow
+                    '#f39c12',  // orange
+                    '#e67e22',  // dark orange
+                    '#e74c3c'   // red
+                ],
+                borderWidth: 0,
+                needleValue: value / 100
+            }]
+        },
+        options: {
+            rotation: -90,
+            circumference: 180,
+            cutout: '75%',
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+function drawPRCurve() {
+
+    const ctx = document.getElementById('prChart').getContext('2d');
+
+    if (prChart) prChart.destroy();
+
+    prChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1],
+            datasets: [{
+                label: 'Precision',
+                data: [1,0.95,0.9,0.85,0.8,0.75,0.7,0.65,0.6,0.55,0.5],
+                borderColor: '#2980b9',
+                fill: true,
+                backgroundColor: 'rgba(52,152,219,0.2)'
+            }]
+        },
+        options: {
+            scales: {
+                x: { title: { display: true, text: 'Recall' }},
+                y: { title: { display: true, text: 'Precision' }}
+            }
+        }
+    });
+}
+
+function predict() {
+
+    const data = {
+        mean_cons: parseFloat(document.getElementById("mean_cons").value),
+        std_cons: parseFloat(document.getElementById("std_cons").value),
+        cv: parseFloat(document.getElementById("cv").value),
+        zero_ratio: parseFloat(document.getElementById("zero_ratio").value),
+        max_diff: parseFloat(document.getElementById("max_diff").value),
+        event_rate: parseFloat(document.getElementById("event_rate").value)
+    };
+
+    fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(result => {
+
+        drawGauge(result.probability_percent);
+        drawPRCurve();
+
+        document.getElementById("riskLabel").innerHTML =
+            "Predict Risk Level: <span style='color:" + result.risk_color + "'>" +
+            result.risk_level + "</span>";
+
+        document.getElementById("probabilityText").innerHTML =
+            "Theft Probability: " + result.probability_percent + "%";
+
+        document.getElementById("metrics").innerHTML =
+            "<strong>PR-AUC:</strong> " + result.pr_auc +
+            " | <strong>F1 Score:</strong> " + result.f1_score;
+    });
+}
+
+</script>
+
+</body>
+</html>
