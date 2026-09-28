@@ -6,7 +6,7 @@ A machine learning-based system for detecting potential electricity theft from s
 
 This project is associated with the following IEEE conference publication:
 
-**Behavior-Driven Electricity Theft Detection Using Machine Learning Under Imbalanced Smart Meter Data**
+Paper: Behavior-Driven Electricity Theft Detection Using Machine Learning Under Imbalanced Smart Meter Data
 
 * **Conference:** TQCEBT 2026
 * **Publisher:** IEEE
